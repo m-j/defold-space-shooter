@@ -18,8 +18,6 @@ function update(self, dt)
 	-- Learn more: https://defold.com/manuals/script/
 	-- Remove this function if not needed
 
-	pprint(self.offset)
-
 	local pos = go.get_position()
 	local new_pos = pos + self.offset * dt * 100
 	go.set_position(new_pos)
@@ -37,6 +35,13 @@ function on_message(self, message_id, message, sender)
 	-- Remove this function if not needed
 end
 
+local function play_animation(new_animation)
+	local current_animation = go.get("player#sprite", "animation")
+	if(current_animation ~= new_animation) then
+		msg.post("player#sprite", "play_animation", {id = new_animation})
+	end
+end
+
 function on_input(self, action_id, action)
 	-- Add input-handling code here. The game object this script is attached to
 	-- must have acquired input focus:
@@ -52,32 +57,38 @@ function on_input(self, action_id, action)
 	if action.released then
 		pprint("released")
 		self.offset = vmath.vector3(0,0,0)
+		msg.post("player#sprite", "play_animation", {id = hash("fly")})
 		return
 	end	
 
 	if action_id == hash("left") then
 		offset = offset + vmath.vector3(-1,0,0)
+		play_animation(hash("fly_bank"))
+		-- msg.post("player#sprite", "play_animation", {id = hash("fly_bank")})
+		sprite.set_hflip("player#sprite", true)
 	end
 	if action_id == hash("right") then
 		offset = offset + vmath.vector3(1, 0, 0)
+		play_animation(hash("fly_bank"))
+		-- msg.post("player#sprite", "play_animation", {id = hash("fly_bank")})
+		sprite.set_hflip("player#sprite", false)		
 	end		
 	if action_id == hash("up") then
 		offset = offset + vmath.vector3(0, 1, 0)
+		play_animation(hash("fly"))
+		-- msg.post("player#sprite", "play_animation", {id = hash("fly")})
 	end
 	if action_id == hash("down") then
 		offset = offset + vmath.vector3(0, -1, 0)
+		play_animation(hash("fly"))
+		-- msg.post("player#sprite", "play_animation", {id = hash("fly")})
 	end
-
-	offset = vmath.normalize(offset)
-	self.offset = offset
 	
-
-
-
+	if vmath.length_sqr(offset) > 0 then
+		offset = vmath.normalize(offset)
+	end
 	
-	
-		
-	
+	self.offset = offset	
 end
 
 function on_reload(self)
